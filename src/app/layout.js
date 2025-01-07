@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 import "@ant-design/v5-patch-for-react-19";
+import { Provider } from "react-redux";
+import store from "@/redux/store";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -11,11 +13,12 @@ const inter = Inter({
 });
 
 export default function RootLayout({ children }) {
-
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AntdRegistry>{children}</AntdRegistry>
+        <Provider store={store}>
+          <AntdRegistry>{children}</AntdRegistry>
+        </Provider>
       </body>
     </html>
   );

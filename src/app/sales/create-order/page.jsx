@@ -17,6 +17,7 @@ import Customer from "@/app/sales/create-order/Customer";
 import dayjs from "dayjs";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/app/firebase/config";
+import { useSelector } from "react-redux";
 
 const page = () => {
   const [form] = Form.useForm();
@@ -30,6 +31,7 @@ const page = () => {
   const [user] = useAuthState(auth);
   const [loading, setLoading] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
+  const userObj = useSelector((state) => state.user.user);
 
   const handleClose = () => {
     setOpenCustomer(false);
@@ -66,7 +68,7 @@ const page = () => {
       form.resetFields();
       setLoading(false);
       messageApi.destroy();
-      messageApi.success({content: "Order Created!"})
+      messageApi.success({ content: "Order Created!" });
     } catch (error) {
       console.log(error);
     }
@@ -143,28 +145,12 @@ const page = () => {
   }, []);
 
   useEffect(() => {
-    const fetchEmployees = async () => {
-      if (!user?.email) return null;
-      try {
-        const queryParams = new URLSearchParams({
-          reportName: "All_Employees",
-          criteria: `(Email == "${user.email}")`,
-        });
-        const response = await fetch(`/api/zoho?${queryParams}`, {
-          method: "GET",
-        });
-        const result = await response.json();
-        const loginUser = result.records.data[0];
-        form.setFieldsValue({
-          Sales_Person: loginUser.Name.zc_display_value,
-          Branch: loginUser.Branch.zc_display_value,
-        });
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    fetchEmployees();
-  }, [user]);
+    if (!userObj.Name) return;
+    form.setFieldsValue({
+      Sales_Person: userObj.Name.zc_display_value,
+      Branch: userObj.Branch.zc_display_value,
+    });
+  }, [userObj]);
 
   const fetchRecords = async (reportName, criteria) => {
     try {

@@ -1,8 +1,6 @@
 "use client";
-
 import {
   ShoppingCartOutlined,
-  HomeOutlined,
   UserOutlined,
   LoadingOutlined,
 } from "@ant-design/icons";
@@ -13,6 +11,8 @@ import { useSignOut, useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/app/firebase/config";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useDispatch } from "react-redux";
+import { setUser } from "@/redux/slice/userSlice";
 
 export default function SalesLayout({ children }) {
   const [signOut, loadingSignOut, errorSignOut] = useSignOut(auth);
@@ -21,6 +21,7 @@ export default function SalesLayout({ children }) {
   const [role, setRole] = useState("");
   const [loadingRole, setLoadingRole] = useState(false);
   const [errorRole, setErrorRole] = useState(null);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     if (!loadingAuth && !user) {
@@ -42,6 +43,8 @@ export default function SalesLayout({ children }) {
           method: "GET",
         });
         const result = await response.json();
+        if(result.records.code != 3000) return
+        dispatch(setUser(result.records.data[0]));
         const userRole =
           result.records.code === 3000
             ? result.records.data[0]?.Role || ""
@@ -57,9 +60,9 @@ export default function SalesLayout({ children }) {
 
     validateZoho();
   }, [user]);
-let items = []
+  let items = [];
   if (role === "Admin") {
-     items = [
+    items = [
       {
         key: "0",
         label: "Create Order",
@@ -109,7 +112,7 @@ let items = []
       },
     ];
   } else if (role === "Manager") {
-     items = [
+    items = [
       {
         key: "1",
         icon: <ShoppingCartOutlined />,
@@ -152,10 +155,9 @@ let items = []
           },
         ],
       },
-     
     ];
   } else {
-     items = [
+    items = [
       {
         key: "0",
         label: "Create Order",
