@@ -33,7 +33,6 @@ export default function SalesLayout({ children }) {
       if (!user?.email) return;
       setLoadingRole(true);
       setErrorRole(null);
-
       try {
         const queryParams = new URLSearchParams({
           reportName: "All_Employees",
@@ -58,63 +57,112 @@ export default function SalesLayout({ children }) {
 
     validateZoho();
   }, [user]);
-
-  const items = [
-    {
-      key: "0",
-      label: "Create Order",
-      onClick: () => router.push("/sales/create-order"),
-    },
-    {
-      key: "1",
-      icon: <ShoppingCartOutlined />,
-      label: "Sales",
-      children: [
-        {
-          key: "2",
-          label: "Sales Order Report",
-          onClick: () => router.push("/sales/sales-order-report"),
-        },
-        {
-          key: "3",
-          label: "Sales Order Items",
-          onClick: () => router.push("/sales/sales-order-items"),
-        },
-        {
-          key: "4",
-          label: "Pending Sales Order Items",
-          onClick: () => router.push("/sales/pending-order-items"),
-        },
-        {
-          key: "5",
-          label: "Ordered Items",
-          onClick: () => router.push("/sales/ordered-items"),
-        },
-        {
-          key: "6",
-          label: "Delivered Orders",
-          onClick: () => router.push("/sales/delivered-orders"),
-        },
-      ],
-    },
-    {
-      key: "7", // Update accordingly
-      icon: <HomeOutlined />,
-      label: "Home Delivery",
-      children: [
-        {
-          key: "8",
-          label: "Waiting for Home Delivery",
-          onClick: () => router.push("/sales/waiting-for-home-delivery"),
-        },
-        {
-          key: "9",
-          label: "Home Delivered",
-          onClick: () => router.push("/sales/home-delivered"),
-        },
-      ],
-    },
-  ];
+let items = []
+  if (role === "Admin") {
+     items = [
+      {
+        key: "0",
+        label: "Create Order",
+        onClick: () => router.push("/sales/create-order"),
+      },
+      {
+        key: "1",
+        icon: <ShoppingCartOutlined />,
+        label: "Sales",
+        children: [
+          {
+            key: "2",
+            label: "Sales Order Report",
+            onClick: () => router.push("/sales/sales-order-report"),
+          },
+          {
+            key: "3",
+            label: "Sales Order Items",
+            onClick: () => router.push("/sales/sales-order-items"),
+          },
+          {
+            key: "4",
+            label: "Pending Sales Order Items",
+            onClick: () => router.push("/sales/pending-order-items"),
+          },
+          {
+            key: "8",
+            label: "Waiting for Home Delivery",
+            onClick: () => router.push("/sales/waiting-for-home-delivery"),
+          },
+          {
+            key: "5",
+            label: "Ordered Items",
+            onClick: () => router.push("/sales/ordered-items"),
+          },
+          {
+            key: "10",
+            label: "Customer Not Reachable",
+            onClick: () => router.push("/sales/customer-unavailable"),
+          },
+          {
+            key: "6",
+            label: "Delivered Orders",
+            onClick: () => router.push("/sales/delivered-orders"),
+          },
+        ],
+      },
+    ];
+  } else if (role === "Manager") {
+     items = [
+      {
+        key: "1",
+        icon: <ShoppingCartOutlined />,
+        label: "Sales",
+        children: [
+          {
+            key: "2",
+            label: "Sales Order Report",
+            onClick: () => router.push("/sales/sales-order-report"),
+          },
+          {
+            key: "3",
+            label: "Sales Order Items",
+            onClick: () => router.push("/sales/sales-order-items"),
+          },
+          {
+            key: "4",
+            label: "Pending Sales Order Items",
+            onClick: () => router.push("/sales/pending-order-items"),
+          },
+          {
+            key: "8",
+            label: "Waiting for Home Delivery",
+            onClick: () => router.push("/sales/waiting-for-home-delivery"),
+          },
+          {
+            key: "5",
+            label: "Ordered Items",
+            onClick: () => router.push("/sales/ordered-items"),
+          },
+          {
+            key: "10",
+            label: "Customer Not Reachable",
+            onClick: () => router.push("/sales/customer-unavailable"),
+          },
+          {
+            key: "6",
+            label: "Delivered Orders",
+            onClick: () => router.push("/sales/delivered-orders"),
+          },
+        ],
+      },
+     
+    ];
+  } else {
+     items = [
+      {
+        key: "0",
+        label: "Create Order",
+        onClick: () => router.push("/sales/create-order"),
+      },
+    ];
+  }
 
   const handleSignOut = async () => {
     try {
