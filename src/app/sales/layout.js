@@ -36,14 +36,14 @@ export default function SalesLayout({ children }) {
       setErrorRole(null);
       try {
         const queryParams = new URLSearchParams({
-          reportName: "All_Employees",
+          reportName: "All_Users",
           criteria: `(Email == "${user.email}")`,
         });
         const response = await fetch(`/api/zoho?${queryParams}`, {
           method: "GET",
         });
         const result = await response.json();
-        if(result.records.code != 3000) return
+        if (result.records.code != 3000) return;
         dispatch(setUser(result.records.data[0]));
         const userRole =
           result.records.code === 3000

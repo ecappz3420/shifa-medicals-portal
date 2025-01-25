@@ -90,10 +90,7 @@ const page = () => {
       }
 
       try {
-        const salesPersonResp = await fetchRecords(
-          "All_Employees",
-          "(ID != 0)"
-        );
+        const salesPersonResp = await fetchRecords("All_Users", "(ID != 0)");
         const salesPersonData = salesPersonResp.data.map((record) => ({
           label: record.Name.zc_display_value,
           value: record.Name.zc_display_value,
