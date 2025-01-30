@@ -89,24 +89,14 @@ export default function SalesLayout({ children }) {
             onClick: () => router.push("/sales/pending-order-items"),
           },
           {
-            key: "8",
-            label: "Waiting for Home Delivery",
-            onClick: () => router.push("/sales/waiting-for-home-delivery"),
-          },
-          {
             key: "5",
             label: "Ordered Items",
             onClick: () => router.push("/sales/ordered-items"),
           },
           {
-            key: "10",
-            label: "Customer Not Reachable",
-            onClick: () => router.push("/sales/customer-unavailable"),
-          },
-          {
             key: "6",
-            label: "Delivered Orders",
-            onClick: () => router.push("/sales/delivered-orders"),
+            label: "Available Items",
+            onClick: () => router.push("/sales/available-items"),
           },
         ],
       },
@@ -134,24 +124,14 @@ export default function SalesLayout({ children }) {
             onClick: () => router.push("/sales/pending-order-items"),
           },
           {
-            key: "8",
-            label: "Waiting for Home Delivery",
-            onClick: () => router.push("/sales/waiting-for-home-delivery"),
-          },
-          {
             key: "5",
             label: "Ordered Items",
             onClick: () => router.push("/sales/ordered-items"),
           },
           {
-            key: "10",
-            label: "Customer Not Reachable",
-            onClick: () => router.push("/sales/customer-unavailable"),
-          },
-          {
             key: "6",
-            label: "Delivered Orders",
-            onClick: () => router.push("/sales/delivered-orders"),
+            label: "Available Items",
+            onClick: () => router.push("/sales/available-items"),
           },
         ],
       },
