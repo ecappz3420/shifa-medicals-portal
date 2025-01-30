@@ -1,8 +1,8 @@
 "use client";
+import { useRef } from "react";
 import {
   Form,
   Select,
-  DatePicker,
   Input,
   InputNumber,
   Button,
@@ -21,38 +21,42 @@ import { useSelector } from "react-redux";
 
 const page = () => {
   const [form] = Form.useForm();
+  const [formInitialValues, setFormInitialValues] = useState({});
   const [customers, setCustomers] = useState([]);
   const [salesPersons, setSalesPersons] = useState([]);
   const [branches, setBranches] = useState([]);
   const [products, setProducts] = useState([]);
   const [openCustomer, setOpenCustomer] = useState(false);
-  const [statuses, setStatuses] = useState([]);
   const [productSearch, setProductSearch] = useState("");
   const [user] = useAuthState(auth);
   const [loading, setLoading] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
+  const [salesExecutives, setSalesExecutives] = useState([]);
+  const [typedNewCustomerValue, setTypedNewCustomerValue] = useState("");
+  const [modalResetTrigger, setModalResetTrigger] = useState(0);
   const userObj = useSelector((state) => state.user.user);
 
-  const handleClose = () => {
-    setOpenCustomer(false);
-  };
+  const addLineItemBtnRef = useRef(null);
+  const customerNameFieldRef = useRef(null);
 
   const onSubmit = async (data) => {
     setLoading(true);
     messageApi.open({ type: "loading", content: "Adding Record..." });
     const formData = {
       ...data,
+      Order_Date: dayjs().format("DD-MMM-YYYY"),
       Customer: customers.find((i) => i.value === data.Customer)?.id || "",
+      Branch: branches.find((i) => i.value === data.Branch)?.id || "",
       Sales_Person:
         salesPersons.find((i) => i.value === data.Sales_Person)?.id || "",
-      Branch: branches.find((i) => i.value === data.Branch)?.id || "",
-      Order_Date: data.Order_Date?.format("DD-MMM-YYYY"),
+      Sales_Executive:
+        salesExecutives.find((i) => i.value === data.Sales_Executive)?.id || "",
       Items:
         data.Items?.map((item) => ({
           Product: products.find((i) => i.value === item.Product)?.id || "",
           Quantity: item?.Quantity || 1,
           Description: item?.Description || "",
-          Status: statuses.find((i) => i.value === item.Status)?.id || "",
+          Status: "260850000000014040",
         })) || "",
     };
     try {
@@ -66,39 +70,40 @@ const page = () => {
       const result = await response.json();
       console.log(result);
       form.resetFields();
-      setLoading(false);
       messageApi.destroy();
       messageApi.success({ content: "Order Created!" });
+      console.log("Submitted Data: ", formData);
     } catch (error) {
+      messageApi.error("Error Adding Record");
       console.log(error);
+    } finally {
+      setLoading(false);
     }
   };
 
+  const handleModalClose = () => {
+    setOpenCustomer(false);
+  };
+
+  const addNewCustomer = (data) => {
+    setCustomers((prev) => [...prev, data]);
+    form.setFieldsValue({ Customer: data.value });
+  };
+
   useEffect(() => {
-    form.setFieldsValue({ Order_Date: dayjs(), Home_Delivery: false });
+    form.setFieldsValue({ Home_Delivery: false });
     const startFetch = async () => {
       try {
         const customerResp = await fetchRecords("All_Customers", "(ID != 0)");
         const customerData = customerResp.data.map((record) => ({
           label: `${record.Phone_Number} - ${record.Customer_Name}`,
-          value: `${record.Phone_Number} - ${record.Customer_Name}`,
+          value: record.Phone_Number,
           id: record.ID,
+          key: record.ID,
         }));
         setCustomers(customerData);
       } catch (error) {
         console.error("Error fetching customers:", error);
-      }
-
-      try {
-        const salesPersonResp = await fetchRecords("All_Users", "(ID != 0)");
-        const salesPersonData = salesPersonResp.data.map((record) => ({
-          label: record.Name.zc_display_value,
-          value: record.Name.zc_display_value,
-          id: record.ID,
-        }));
-        setSalesPersons(salesPersonData);
-      } catch (error) {
-        console.error("Error fetching sales persons:", error);
       }
 
       try {
@@ -125,28 +130,54 @@ const page = () => {
       } catch (error) {
         console.error("Error fetching products:", error);
       }
-
-      try {
-        const statusResp = await fetchRecords("All_Statuses", "(ID != 0)");
-        const statusData = statusResp.data.map((record) => ({
-          label: record.Status_Name,
-          value: record.Status_Name,
-          id: record.ID,
-        }));
-        setStatuses(statusData);
-      } catch (error) {
-        console.error("Error fetching statuses:", error);
-      }
     };
     startFetch();
   }, []);
 
   useEffect(() => {
-    if (!userObj.Name) return;
-    form.setFieldsValue({
-      Sales_Person: userObj.Name.zc_display_value,
-      Branch: userObj.Branch.zc_display_value,
-    });
+    const init = async () => {
+      if (!userObj.Name) return;
+      const fieldsValue = {
+        Sales_Person: userObj.Name.zc_display_value,
+        Branch: userObj.Branch.zc_display_value,
+        Items: [
+          {
+            Product: undefined,
+            Quantity: 1,
+            Description: "",
+          },
+        ],
+      };
+      form.setFieldsValue(fieldsValue);
+      setFormInitialValues(fieldsValue);
+
+      try {
+        const salesPersonResp = await fetchRecords("All_Users", "(ID != 0)");
+        const salesPersonData = salesPersonResp.data.map((record) => ({
+          label: record.Name.zc_display_value,
+          value: record.Name.zc_display_value,
+          id: record.ID,
+        }));
+        setSalesPersons(salesPersonData);
+        try {
+          const salesExecutives = salesPersonResp.data.filter(
+            (i) => i.Branch.ID === userObj.Branch.ID
+          );
+          setSalesExecutives(() => {
+            return salesExecutives.map((record) => ({
+              label: record.Name.zc_display_value,
+              value: record.Name.zc_display_value,
+              id: record.ID,
+            }));
+          });
+        } catch (error) {
+          console.error("Error setting sales executives:", error);
+        }
+      } catch (error) {
+        console.error("Error fetching sales persons:", error);
+      }
+    };
+    init();
   }, [userObj]);
 
   const fetchRecords = async (reportName, criteria) => {
@@ -164,53 +195,202 @@ const page = () => {
     }
   };
 
-  const addNewCustomer = (data) => {
-    setCustomers((prev) => [...prev, data]);
-    form.setFieldsValue({ Customer: data });
-  };
-
-  const handleKeydown = async (event, fieldName) => {
-    if (event.key === "Enter" && productSearch) {
-      const exists = products.some((opt) => opt.value === productSearch);
-      if (!exists) {
-        try {
-          const response = await fetch("/api/zoho", {
-            method: "POST",
-            body: JSON.stringify({
-              formName: "Product",
-              formData: {
-                Product_Name: productSearch,
-              },
-            }),
-          });
-          const result = await response.json();
-          const newProduct = {
-            label: productSearch,
-            value: productSearch,
-            id: result.data.ID,
-            key: result.data.ID,
-          };
-          setProducts((prev) => [...prev, newProduct]);
-
-          form.setFieldsValue({
-            Items: form
-              .getFieldValue("Items")
-              .map((item, index) =>
-                index === fieldName ? { ...item, Product: productSearch } : item
-              ),
-          });
-
-          console.log(result);
-        } catch (error) {
-          console.error("Error Adding Product:", error);
+  const handleAddNewCustomerOnKeyDown = (event) => {
+    if (event.key === "Enter") {
+      if (typedNewCustomerValue) {
+        if (typedNewCustomerValue !== "cleared") {
+          const exists = customers.some(
+            (opt) => opt.value === typedNewCustomerValue
+          );
+          if (!exists) {
+            setModalResetTrigger((prev) => prev + 1);
+            setOpenCustomer(true);
+          }
+        } else {
+          const targetForm = event.target.form; // Get the form element
+          const index = Array.prototype.indexOf.call(targetForm, event.target); // Get the current element's index
+          if (targetForm[index + 3]) {
+            targetForm[index + 3].focus(); // Focus the next element
+          }
         }
       }
     }
   };
 
+  const handleAddNewProductOnKeyDown = async (event, fieldName) => {
+    if (event.key === "Enter")
+      if (productSearch) {
+        if (productSearch !== "cleared") {
+          const exists = products.some((opt) => opt.value === productSearch);
+          if (!exists) {
+            try {
+              const response = await fetch("/api/zoho", {
+                method: "POST",
+                body: JSON.stringify({
+                  formName: "Product",
+                  formData: {
+                    Product_Name: productSearch,
+                  },
+                }),
+              });
+              const result = await response.json();
+              const newProduct = {
+                label: productSearch,
+                value: productSearch,
+                id: result.data.ID,
+                key: result.data.ID,
+              };
+              setProducts((prev) => [...prev, newProduct]);
+
+              form.setFieldsValue({
+                Items: form
+                  .getFieldValue("Items")
+                  .map((item, index) =>
+                    index === fieldName
+                      ? { ...item, Product: productSearch }
+                      : item
+                  ),
+              });
+
+              console.log(result);
+            } catch (error) {
+              console.error("Error Adding Product:", error);
+            }
+          }
+        } else {
+          const targetForm = event.target.form;
+          const index = Array.prototype.indexOf.call(targetForm, event.target);
+          if (targetForm[index + 1]) {
+            targetForm[index + 1].focus();
+          }
+        }
+      }
+  };
+
+  const handleCustomerSearch = (value) => {
+    const filteredResults = customers.filter((customer) =>
+      customer.value.includes(value)
+    );
+
+    if (filteredResults.length === 0) {
+      setTypedNewCustomerValue(value.length > 10 ? value.slice(0, 10) : value);
+    } else {
+      setTypedNewCustomerValue("cleared");
+    }
+  };
+
+  const handleProductSearch = (value) => {
+    const filteredResults = products.filter((product) =>
+      product.value.includes(value)
+    );
+
+    if (filteredResults.length === 0) {
+      setProductSearch(value);
+    } else {
+      setProductSearch("cleared");
+    }
+  };
+
+  const handleFormKeyDown = (e) => {
+    if (e.key === "Enter") {
+      const targetForm = e.target.form;
+      if (e.target.id === "Customer") {
+        if (form.getFieldValue(e.target.id)) {
+          e.preventDefault();
+          const index = Array.prototype.indexOf.call(targetForm, e.target);
+          if (targetForm[index + 3]) {
+            targetForm[index + 3].focus();
+          }
+        }
+      } else if (e.target.id === "Sales_Executive") {
+        if (form.getFieldValue(e.target.id)) {
+          e.preventDefault();
+          const index = Array.prototype.indexOf.call(targetForm, e.target);
+          if (targetForm[index + 1]) {
+            targetForm[index + 1].focus();
+          }
+        }
+      } else if (e.target.id.includes("Product")) {
+        if (
+          form.getFieldValue("Items")[
+            Number(document.activeElement.id.split("_")[1])
+          ]?.Product
+        ) {
+          e.preventDefault();
+          const index = Array.prototype.indexOf.call(targetForm, e.target);
+          if (targetForm[index + 1]) {
+            targetForm[index + 1].focus();
+          }
+        }
+      } else if (e.target.id.includes("Description")) {
+        e.preventDefault();
+        const index = Array.prototype.indexOf.call(targetForm, e.target);
+        if (targetForm[index + 2].type === "button") {
+          targetForm[index + 3].focus();
+        } else {
+          targetForm[index + 2].focus();
+        }
+      } else {
+        e.preventDefault();
+        const index = Array.prototype.indexOf.call(targetForm, e.target);
+        if (targetForm[index + 1]) {
+          targetForm[index + 1].focus();
+        } else if (targetForm[index].type === "submit") {
+          e.preventDefault();
+          targetForm[index].click();
+        }
+      }
+    } else if (e.ctrlKey && e.shiftKey) {
+      handleAddProductLineItemOnKeyDown(e);
+    } else if (e.ctrlKey && e.key === "Delete") {
+      e.target.id.includes("Items") && handleDeleteProductLineItemOnKeyDown(e);
+    }
+  };
+
+  const handleAddProductLineItemOnKeyDown = (e) => {
+    addLineItemBtnRef?.current.click();
+    if (e.target.id.includes("Items")) {
+      const nextLineItemsIndex = Number(e.target.id.split("_")[1]) + 1;
+      setTimeout(() => {
+        document.getElementById(`Items_${nextLineItemsIndex}_Product`).focus();
+      }, 500);
+    }
+  };
+
+  const handleDeleteProductLineItemOnKeyDown = (e) => {
+    const targetForm = e.target.form;
+    const index = Array.prototype.indexOf.call(targetForm, e.target);
+
+    const idParts = e.target.id.split("_");
+    const currentElement = idParts[2];
+
+    idParts[2] = "Remove";
+    const removeBtnId = idParts.join("_");
+
+    document.getElementById(removeBtnId).click();
+
+    switch (currentElement) {
+      case "Product":
+        targetForm[index - 2] && targetForm[index - 2].focus();
+        break;
+      case "Quantity":
+        targetForm[index - 3] && targetForm[index - 3].focus();
+        break;
+      case "Description":
+        targetForm[index - 4] && targetForm[index - 4].focus();
+        break;
+    }
+  };
+
   return (
     <div className="p-3">
-      <Form onFinish={onSubmit} form={form} layout="vertical">
+      <Form
+        onFinish={onSubmit}
+        form={form}
+        layout="vertical"
+        onKeyDown={handleFormKeyDown}
+        initialValues={formInitialValues}
+      >
         <div className="grid grid-cols-2 gap-5">
           {/* Customer Name */}
           <Form.Item
@@ -221,43 +401,38 @@ const page = () => {
           >
             <Select
               options={customers}
+              onSearch={handleCustomerSearch}
               showSearch
               allowClear
-              dropdownRender={(menu) => (
-                <>
-                  {menu}
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "center",
-                      padding: "4px",
-                      borderTop: "1px solid #f0f0f0",
-                    }}
-                  >
-                    <Button type="link" onClick={() => setOpenCustomer(true)}>
-                      + Add New Customer
-                    </Button>
-                  </div>
-                </>
-              )}
+              autoFocus
+              ref={customerNameFieldRef}
+              onKeyDown={handleAddNewCustomerOnKeyDown}
+              dropdownRender={(menu) => <>{menu}</>}
             />
           </Form.Item>
           <Modal
             open={openCustomer}
-            onCancel={handleClose}
-            onClose={handleClose}
-            onOk={handleClose}
+            onCancel={handleModalClose}
+            onClose={handleModalClose}
+            onOk={handleModalClose}
             footer={<></>}
           >
             <Customer
-              handleClose={handleClose}
+              modalResetTrigger={modalResetTrigger}
+              handleModalClose={handleModalClose}
               addNewCustomer={addNewCustomer}
+              newCustomerPhoneNumber={typedNewCustomerValue}
             />
           </Modal>
 
-          {/* Order Date */}
-          <Form.Item label="Order Date" name="Order_Date" className="w-[300px]">
-            <DatePicker format="DD-MMM-YYYY" className="w-[300px]" />
+          {/* Branch */}
+          <Form.Item
+            className="w-[300px]"
+            label="Branch"
+            name="Branch"
+            rules={[{ required: true, message: "Please select a branch" }]}
+          >
+            <Select options={branches} disabled />
           </Form.Item>
 
           {/* Sales Person */}
@@ -269,22 +444,41 @@ const page = () => {
               { required: true, message: "Please select a sales person" },
             ]}
           >
-            <Select options={salesPersons} showSearch allowClear />
+            <Select options={salesPersons} showSearch allowClear disabled />
           </Form.Item>
 
-          {/* Branch */}
           <Form.Item
             className="w-[300px]"
-            label="Branch"
-            name="Branch"
-            rules={[{ required: true, message: "Please select a branch" }]}
+            name="Sales_Executive"
+            label="Sales Executive"
+            rules={[
+              { required: true, message: "Please select a sales executive" },
+            ]}
           >
-            <Select options={branches} />
+            <Select options={salesExecutives} allowClear showSearch />
           </Form.Item>
+        </div>
+        <div className="flex flex-col">
           <Form.Item
             layout="horizontal"
             label="Home Delivery"
             name="Home_Delivery"
+            valuePropName="checked"
+          >
+            <Checkbox />
+          </Form.Item>
+          <Form.Item
+            layout="horizontal"
+            label="Due Products"
+            name="Due_Products"
+            valuePropName="checked"
+          >
+            <Checkbox />
+          </Form.Item>
+          <Form.Item
+            layout="horizontal"
+            label="Confirm with Customers"
+            name="Confirm_with_Customers"
             valuePropName="checked"
           >
             <Checkbox />
@@ -294,7 +488,6 @@ const page = () => {
           <div className="w-[300px]">Product Name</div>
           <div className="w-[100px]">Quantity</div>
           <div className="w-[300px]">Description</div>
-          <div className="w-[300px]">Status</div>
         </div>
         <Form.List name="Items">
           {(fields, { add, remove }) => (
@@ -312,24 +505,27 @@ const page = () => {
                       placeholder="Select Product"
                       allowClear
                       showSearch
-                      onKeyDown={(event) => handleKeydown(event, name)}
-                      onSearch={(value) => setProductSearch(value)}
+                      onKeyDown={(event) =>
+                        handleAddNewProductOnKeyDown(event, name)
+                      }
+                      onSearch={(value) => handleProductSearch(value, name)}
                     />
                   </Form.Item>
-
                   <Form.Item
                     {...restField}
                     name={[name, "Quantity"]}
-                    initialValue={1}
                     rules={[
                       { required: true, message: "Quantity is required" },
-                      { type: "number", min: 1, message: "Must be at least 1" },
+                      {
+                        type: "number",
+                        min: 1,
+                        message: "Must be at least 1",
+                      },
                     ]}
                     className="w-[100px]"
                   >
                     <InputNumber min={1} placeholder="Quantity" />
                   </Form.Item>
-
                   <Form.Item
                     {...restField}
                     name={[name, "Description"]}
@@ -337,25 +533,24 @@ const page = () => {
                   >
                     <Input.TextArea placeholder="Description" />
                   </Form.Item>
-                  <Form.Item
-                    {...restField}
-                    name={[name, "Status"]}
-                    initialValue={"Pending"}
-                    rules={[{ required: true, message: "Status is required" }]}
-                    className="w-[200px]"
-                  >
-                    <Select options={statuses} allowClear showSearch />
-                  </Form.Item>
 
                   <Button
-                    type="danger"
+                    id={"Items_" + name + "_Remove"}
+                    danger
+                    type="text"
                     onClick={() => remove(name)}
                     icon={<CloseOutlined />}
                   />
                 </div>
               ))}
 
-              <Button type="dashed" onClick={() => add()} className="mt-3">
+              <Button
+                style={{ visibility: "hidden" }}
+                type="dashed"
+                onClick={() => add({ Quantity: 1 })}
+                className="mt-3"
+                ref={addLineItemBtnRef}
+              >
                 + Add Line Item
               </Button>
             </>
