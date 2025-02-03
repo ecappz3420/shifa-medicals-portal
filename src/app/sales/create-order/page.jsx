@@ -91,7 +91,11 @@ const page = () => {
   };
 
   useEffect(() => {
-    form.setFieldsValue({ Home_Delivery: false });
+    form.setFieldsValue({
+      Home_Delivery: false,
+      Due_Products: false,
+      Confirm_with_Customers: false,
+    });
     const startFetch = async () => {
       try {
         const customerResp = await fetchRecords("All_Customers", "(ID != 0)");
@@ -310,7 +314,10 @@ const page = () => {
             targetForm[index + 1].focus();
           }
         }
-      } else if (e.target.id.includes("Product")) {
+      } else if (
+        e.target.id.startsWith("Items") &&
+        e.target.id.endsWith("Product")
+      ) {
         if (
           form.getFieldValue("Items")[
             Number(document.activeElement.id.split("_")[1])
@@ -390,6 +397,7 @@ const page = () => {
         layout="vertical"
         onKeyDown={handleFormKeyDown}
         initialValues={formInitialValues}
+        scrollToFirstError={true}
       >
         <div className="grid grid-cols-2 gap-5">
           {/* Customer Name */}
@@ -516,11 +524,7 @@ const page = () => {
                     name={[name, "Quantity"]}
                     rules={[
                       { required: true, message: "Quantity is required" },
-                      {
-                        type: "number",
-                        min: 1,
-                        message: "Must be at least 1",
-                      },
+                      { type: "number", min: 1, message: "Must be at least 1" },
                     ]}
                     className="w-[100px]"
                   >
