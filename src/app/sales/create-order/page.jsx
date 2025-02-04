@@ -347,7 +347,7 @@ const page = () => {
           targetForm[index].click();
         }
       }
-    } else if (e.ctrlKey && e.shiftKey) {
+    } else if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
       handleAddProductLineItemOnKeyDown(e);
     } else if (
       (e.ctrlKey || e.metaKey) &&
