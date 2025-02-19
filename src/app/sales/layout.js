@@ -61,7 +61,7 @@ export default function SalesLayout({ children }) {
     validateZoho();
   }, [user]);
   let items = [];
-  if (role === "Admin") {
+  if (role === "Manager") {
     items = [
       {
         key: "0",
@@ -100,38 +100,17 @@ export default function SalesLayout({ children }) {
           },
         ],
       },
-    ];
-  } else if (role === "Manager") {
-    items = [
       {
-        key: "1",
-        icon: <ShoppingCartOutlined />,
-        label: "Sales",
+        key: "7",
+        label: "Master",
         children: [
           {
-            key: "2",
-            label: "Sales Order Report",
-            onClick: () => router.push("/sales/sales-order-report"),
+            key: "7.1",
+            label: <Link href="/sales/products">All Products</Link>,
           },
           {
-            key: "3",
-            label: "Sales Order Items",
-            onClick: () => router.push("/sales/sales-order-items"),
-          },
-          {
-            key: "4",
-            label: "Pending Sales Order Items",
-            onClick: () => router.push("/sales/pending-order-items"),
-          },
-          {
-            key: "5",
-            label: "Ordered Items",
-            onClick: () => router.push("/sales/ordered-items"),
-          },
-          {
-            key: "6",
-            label: "Available Items",
-            onClick: () => router.push("/sales/available-items"),
+            key: "7.2",
+            label: <Link href="/sales/customers">All Customers</Link>,
           },
         ],
       },
@@ -142,6 +121,10 @@ export default function SalesLayout({ children }) {
         key: "0",
         label: "Create Order",
         onClick: () => router.push("/sales/create-order"),
+      },
+      {
+        key: "1",
+        label: <Link href="/sales/my-orders">Sales Order Items</Link>,
       },
     ];
   }

@@ -15,20 +15,15 @@ import { CloseOutlined } from "@ant-design/icons";
 import { useEffect, useState } from "react";
 import Customer from "@/app/sales/create-order/Customer";
 import dayjs from "dayjs";
-import { useAuthState } from "react-firebase-hooks/auth";
-import { auth } from "@/app/firebase/config";
 import { useSelector } from "react-redux";
 
 const page = () => {
   const [form] = Form.useForm();
-  const [formInitialValues, setFormInitialValues] = useState({});
   const [customers, setCustomers] = useState([]);
-  const [salesPersons, setSalesPersons] = useState([]);
-  const [branches, setBranches] = useState([]);
+  const [formInitialValues, setFormInitialValues] = useState({});
   const [products, setProducts] = useState([]);
   const [openCustomer, setOpenCustomer] = useState(false);
   const [productSearch, setProductSearch] = useState("");
-  const [user] = useAuthState(auth);
   const [loading, setLoading] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
   const [salesExecutives, setSalesExecutives] = useState([]);
@@ -46,9 +41,8 @@ const page = () => {
       ...data,
       Order_Date: dayjs().format("DD-MMM-YYYY"),
       Customer: customers.find((i) => i.value === data.Customer)?.id || "",
-      Branch: branches.find((i) => i.value === data.Branch)?.id || "",
-      Sales_Person:
-        salesPersons.find((i) => i.value === data.Sales_Person)?.id || "",
+      Branch: userObj.Branch.ID,
+      Sales_Person: userObj.ID,
       Sales_Executive:
         salesExecutives.find((i) => i.value === data.Sales_Executive)?.id || "",
       Items:
@@ -111,18 +105,6 @@ const page = () => {
       }
 
       try {
-        const branchResp = await fetchRecords("All_Branches", "(ID != 0)");
-        const branchData = branchResp.data.map((record) => ({
-          label: record.Branch_Name,
-          value: record.Branch_Name,
-          id: record.ID,
-        }));
-        setBranches(branchData);
-      } catch (error) {
-        console.error("Error fetching branches:", error);
-      }
-
-      try {
         const productResp = await fetchRecords("All_Products", "(ID != 0)");
         const productsData = productResp.data.map((record) => ({
           label: record.Product_Name,
@@ -142,43 +124,31 @@ const page = () => {
     const init = async () => {
       if (!userObj.Name) return;
       const fieldsValue = {
-        Sales_Person: userObj.Name.zc_display_value,
-        Branch: userObj.Branch.zc_display_value,
         Items: [
           {
             Product: undefined,
-            Quantity: 1,
+            Quantity: null,
             Description: "",
           },
         ],
       };
       form.setFieldsValue(fieldsValue);
       setFormInitialValues(fieldsValue);
-
       try {
-        const salesPersonResp = await fetchRecords("All_Users", "(ID != 0)");
-        const salesPersonData = salesPersonResp.data.map((record) => ({
-          label: record.Name.zc_display_value,
-          value: record.Name.zc_display_value,
-          id: record.ID,
-        }));
-        setSalesPersons(salesPersonData);
-        try {
-          const salesExecutives = salesPersonResp.data.filter(
-            (i) => i.Branch.ID === userObj.Branch.ID
-          );
-          setSalesExecutives(() => {
-            return salesExecutives.map((record) => ({
-              label: record.Name.zc_display_value,
-              value: record.Name.zc_display_value,
-              id: record.ID,
-            }));
-          });
-        } catch (error) {
-          console.error("Error setting sales executives:", error);
-        }
+        const salesExecutiveResp = await fetchRecords(
+          "Sales_Executive_Report",
+          `(Branch == ${userObj.Branch.ID})`
+        );
+        setSalesExecutives(
+          salesExecutiveResp.data.map((record) => ({
+            label: record.Name,
+            value: record.Name,
+            id: record.ID,
+            key: record.ID,
+          }))
+        );
       } catch (error) {
-        console.error("Error fetching sales persons:", error);
+        console.error("Error fetching sales executives:", error);
       }
     };
     init();
@@ -437,28 +407,6 @@ const page = () => {
               newCustomerPhoneNumber={typedNewCustomerValue}
             />
           </Modal>
-
-          {/* Branch */}
-          <Form.Item
-            className="w-[300px]"
-            label="Branch"
-            name="Branch"
-            rules={[{ required: true, message: "Please select a branch" }]}
-          >
-            <Select options={branches} disabled />
-          </Form.Item>
-
-          {/* Sales Person */}
-          <Form.Item
-            className="w-[300px]"
-            label="Sales Person"
-            name="Sales_Person"
-            rules={[
-              { required: true, message: "Please select a sales person" },
-            ]}
-          >
-            <Select options={salesPersons} showSearch allowClear disabled />
-          </Form.Item>
 
           <Form.Item
             className="w-[300px]"
