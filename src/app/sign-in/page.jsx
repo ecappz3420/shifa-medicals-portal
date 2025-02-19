@@ -4,12 +4,14 @@ import { Form, Input, Button, Alert } from "antd";
 import { useSignInWithEmailAndPassword } from "react-firebase-hooks/auth";
 import { auth } from "@/app/firebase/config";
 import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
 
 const SignInPage = () => {
   const [form] = Form.useForm();
   const router = useRouter();
   const [signInWithEmailAndPassword, user, loading, error] =
     useSignInWithEmailAndPassword(auth);
+  const userData = useSelector((state) => state.user);
 
   const onFinish = async (values) => {
     try {
@@ -21,7 +23,11 @@ const SignInPage = () => {
         console.log("User Signed In:", res);
         sessionStorage.setItem("user", JSON.stringify(res.user));
         form.resetFields();
-        router.push("/sales/sales-order-report");
+        if (userData?.Role === "Admin" || userData?.Role === "Manager") {
+          router.push("/sales/sales-order-report");
+        } else {
+          router.push("/sales/create-order");
+        }
       }
     } catch (error) {
       console.error("Sign In Failed:", error);

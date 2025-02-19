@@ -1,7 +1,5 @@
-import { redirect } from "next/navigation"
-
 const page = () => {
-  redirect("/sales-order-report");
-}
+  return null;
+};
 
-export default page
+export default page;
