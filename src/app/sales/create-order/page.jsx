@@ -180,12 +180,6 @@ const page = () => {
             setModalResetTrigger((prev) => prev + 1);
             setOpenCustomer(true);
           }
-        } else {
-          const targetForm = event.target.form; // Get the form element
-          const index = Array.prototype.indexOf.call(targetForm, event.target); // Get the current element's index
-          if (targetForm[index + 3]) {
-            targetForm[index + 3].focus(); // Focus the next element
-          }
         }
       }
     }
@@ -230,12 +224,6 @@ const page = () => {
             } catch (error) {
               console.error("Error Adding Product:", error);
             }
-          }
-        } else {
-          const targetForm = event.target.form;
-          const index = Array.prototype.indexOf.call(targetForm, event.target);
-          if (targetForm[index + 1]) {
-            targetForm[index + 1].focus();
           }
         }
       }
@@ -350,23 +338,26 @@ const page = () => {
     const index = Array.prototype.indexOf.call(targetForm, e.target);
 
     const idParts = e.target.id.split("_");
-    const currentElement = idParts[2];
 
-    idParts[2] = "Remove";
-    const removeBtnId = idParts.join("_");
+    if(idParts[1] !== "0") {
+      const currentElement = idParts[2];
 
-    document.getElementById(removeBtnId).click();
+      idParts[2] = "Remove";
+      const removeBtnId = idParts.join("_");
 
-    switch (currentElement) {
-      case "Product":
-        targetForm[index - 2] && targetForm[index - 2].focus();
-        break;
-      case "Quantity":
-        targetForm[index - 3] && targetForm[index - 3].focus();
-        break;
-      case "Description":
-        targetForm[index - 4] && targetForm[index - 4].focus();
-        break;
+      document.getElementById(removeBtnId).click();
+
+      switch (currentElement) {
+        case "Product":
+          targetForm[index - 2] && targetForm[index - 2].focus();
+          break;
+        case "Quantity":
+          targetForm[index - 3] && targetForm[index - 3].focus();
+          break;
+        case "Description":
+          targetForm[index - 4] && targetForm[index - 4].focus();
+          break;
+      }
     }
   };
 
