@@ -332,9 +332,15 @@ const page = () => {
   const handleAddProductLineItemOnKeyDown = (e) => {
     addLineItemBtnRef?.current.click();
     if (e.target.id.includes("Items")) {
-      const nextLineItemsIndex = Number(e.target.id.split("_")[1]) + 1;
+      const nextLineItemIndex = Number(e.target.id.split("_")[1]) + 1;
       setTimeout(() => {
-        document.getElementById(`Items_${nextLineItemsIndex}_Product`).focus();
+        document.getElementById(`Items_${nextLineItemIndex}_Product`).focus();
+      }, 200);
+    } else {
+      setTimeout(() => {
+      const targetForm = e.target.form;
+      const addLineItemBtnIndex = Array.prototype.indexOf.call(targetForm, addLineItemBtnRef.current);
+      targetForm[addLineItemBtnIndex - 4] && targetForm[addLineItemBtnIndex - 4].focus();
       }, 200);
     }
   };
@@ -348,7 +354,7 @@ const page = () => {
 
     idParts[2] = "Remove";
     const removeBtnId = idParts.join("_");
-    
+
     document.getElementById(removeBtnId).click();
 
     switch (currentElement) {
