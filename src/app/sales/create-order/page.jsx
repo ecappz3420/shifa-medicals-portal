@@ -48,7 +48,7 @@ const page = () => {
       Items:
         data.Items?.map((item) => ({
           Product: products.find((i) => i.value === item.Product)?.id || "",
-          Quantity: item?.Quantity || 1,
+          Quantity: item?.Quantity || null,
           Description: item?.Description || "",
           Status: "260850000000014040",
         })) || "",
@@ -272,8 +272,8 @@ const page = () => {
         if (form.getFieldValue(e.target.id)) {
           e.preventDefault();
           const index = Array.prototype.indexOf.call(targetForm, e.target);
-          if (targetForm[index + 3]) {
-            targetForm[index + 3].focus();
+          if (targetForm[index + 1]) {
+            targetForm[index + 1].focus();
           }
         }
       } else if (e.target.id === "Sales_Executive") {
@@ -335,7 +335,7 @@ const page = () => {
       const nextLineItemsIndex = Number(e.target.id.split("_")[1]) + 1;
       setTimeout(() => {
         document.getElementById(`Items_${nextLineItemsIndex}_Product`).focus();
-      }, 500);
+      }, 200);
     }
   };
 
@@ -348,7 +348,7 @@ const page = () => {
 
     idParts[2] = "Remove";
     const removeBtnId = idParts.join("_");
-
+    
     document.getElementById(removeBtnId).click();
 
     switch (currentElement) {
@@ -502,9 +502,8 @@ const page = () => {
               ))}
 
               <Button
-                style={{ visibility: "hidden" }}
                 type="dashed"
-                onClick={() => add({ Quantity: 1 })}
+                onClick={() => add()}
                 className="mt-3"
                 ref={addLineItemBtnRef}
               >
