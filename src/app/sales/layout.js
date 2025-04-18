@@ -114,6 +114,10 @@ export default function SalesLayout({ children }) {
           },
         ],
       },
+      {
+        key: "8",
+        label: <Link href="/sales/reminders">Reminder</Link>,
+      },
     ];
   } else {
     items = [
@@ -124,7 +128,23 @@ export default function SalesLayout({ children }) {
       },
       {
         key: "1",
-        label: <Link href="/sales/my-orders">Sales Order Items</Link>,
+        label: "Sales",
+        children: [
+          {
+            key: "1.1",
+            label: <Link href="/sales/my-orders">Sales Order Items</Link>,
+          },
+          {
+            key: "1.2",
+            label: (
+              <Link href="/sales/pending-order-items">Pending Order Items</Link>
+            ),
+          },
+        ],
+      },
+      {
+        key: "2",
+        label: <Link href="/sales/reminders">Reminder</Link>,
       },
     ];
   }

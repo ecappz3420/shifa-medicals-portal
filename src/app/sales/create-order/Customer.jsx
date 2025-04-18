@@ -24,6 +24,7 @@ const Customer = ({
       ...data,
       Phone_Number: `+91${data.Phone_Number}`,
     };
+    console.log("Formatted Data: ", formattedData);
     try {
       const response = await fetch("/api/zoho", {
         method: "POST",
@@ -33,6 +34,7 @@ const Customer = ({
         }),
       });
       const result = await response.json();
+      console.log(result);
       addNewCustomer({
         label: `+91${data.Phone_Number} - ${data.Customer_Name}`,
         value: `+91${data.Phone_Number}`,
@@ -42,7 +44,7 @@ const Customer = ({
       handleModalClose();
       form.resetFields();
     } catch (error) {
-      console.log(`Error Adding Record: ${error}`);
+      console.error(`Error Adding Record: ${error}`);
     }
   };
   return (

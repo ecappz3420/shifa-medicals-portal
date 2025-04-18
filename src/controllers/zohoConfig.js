@@ -35,7 +35,9 @@ export async function refreshAccessToken() {
 export async function getRecords(reportLinkName, authToken, criteria) {
   try {
     const response = await axios.get(
-      `https://www.zohoapis.in/creator/v2.1/data/shifaumar421/order-management/report/${reportLinkName}?criteria=${encodeURIComponent(criteria)}`,
+      `https://www.zohoapis.in/creator/v2.1/data/shifaumar421/order-management/report/${reportLinkName}?max_records=1000&criteria=${encodeURIComponent(
+        criteria
+      )}`,
       {
         headers: {
           Authorization: `Zoho-oauthtoken ${authToken}`,
@@ -54,8 +56,7 @@ export async function addRecord(formLinkName, authToken, data) {
   try {
     const formData = JSON.stringify({
       data: data,
-    })
-    console.log(formData);
+    });
     const response = await axios.post(
       `https://www.zohoapis.in/creator/v2.1/data/shifaumar421/order-management/form/${formLinkName}`,
       formData,

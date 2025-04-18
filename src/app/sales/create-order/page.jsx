@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import Customer from "@/app/sales/create-order/Customer";
 import dayjs from "dayjs";
 import { useSelector } from "react-redux";
+import useDebounce from "@/hooks/useDebounce";
 
 const page = () => {
   const [form] = Form.useForm();
@@ -29,6 +30,8 @@ const page = () => {
   const [salesExecutives, setSalesExecutives] = useState([]);
   const [typedNewCustomerValue, setTypedNewCustomerValue] = useState("");
   const [modalResetTrigger, setModalResetTrigger] = useState(0);
+  const [customerSearchText, setCustomerSearchText] = useState("");
+  const debouncedCustomerSearch = useDebounce(customerSearchText, 700);
   const userObj = useSelector((state) => state.user.user);
 
   const addLineItemBtnRef = useRef(null);
@@ -77,6 +80,7 @@ const page = () => {
 
   const handleModalClose = () => {
     setOpenCustomer(false);
+    setTypedNewCustomerValue("");
   };
 
   const addNewCustomer = (data) => {
@@ -84,23 +88,26 @@ const page = () => {
     form.setFieldsValue({ Customer: data.value });
   };
 
+  const fetchAllCustomers = async (params) => {
+    try {
+      const customerResp = await fetchRecords("All_Customers", "(ID != 0)");
+      const customerData = customerResp.data.map((record) => ({
+        label: `${record.Phone_Number} - ${record.Customer_Name}`,
+        value: record.Phone_Number,
+        id: record.ID,
+        key: record.ID,
+      }));
+      setCustomers(customerData);
+    } catch (error) {
+      console.error("Error fetching customers:", error);
+    }
+  };
+
   useEffect(() => {
     form.setFieldsValue({ Home_Delivery: false });
     const startFetch = async () => {
       try {
-        const customerResp = await fetchRecords("All_Customers", "(ID != 0)");
-        const customerData = customerResp.data.map((record) => ({
-          label: `${record.Phone_Number} - ${record.Customer_Name}`,
-          value: record.Phone_Number,
-          id: record.ID,
-          key: record.ID,
-        }));
-        setCustomers(customerData);
-      } catch (error) {
-        console.error("Error fetching customers:", error);
-      }
-
-      try {
+        await fetchAllCustomers();
         const productResp = await fetchRecords("All_Products", "(ID != 0)");
         const productsData = productResp.data.map((record) => ({
           label: record.Product_Name,
@@ -237,16 +244,39 @@ const page = () => {
       }
   };
 
-  const handleCustomerSearch = (value) => {
-    const filteredResults = customers.filter((customer) =>
-      customer.value.includes(value)
-    );
+  const handleCustomerSearch = async (value) => {
+    setCustomerSearchText(value);
+  };
 
-    if (filteredResults.length === 0) {
-      setTypedNewCustomerValue(value.length > 10 ? value.slice(0, 10) : value);
-    } else {
-      setTypedNewCustomerValue("cleared");
-    }
+  useEffect(() => {
+    if (!debouncedCustomerSearch) return;
+
+    const fetchSearchedCustomers = async () => {
+      try {
+        const criteria = `(Phone_Number.contains("${debouncedCustomerSearch}"))`;
+        const query = new URLSearchParams({
+          reportName: "All_Customers",
+          criteria,
+        });
+        const response = await fetch("/api/zoho?" + query, { method: "GET" });
+        const result = await response.json();
+        const customerData = result.records.data.map((record) => ({
+          label: `${record.Phone_Number} - ${record.Customer_Name}`,
+          value: record.Phone_Number,
+          id: record.ID,
+          key: record.ID,
+        }));
+        setCustomers(customerData);
+      } catch (error) {
+        console.error("Error fetching customers:", error);
+      }
+    };
+
+    fetchSearchedCustomers();
+  }, [debouncedCustomerSearch]);
+
+  const handleCustomerClearSearch = async () => {
+    fetchAllCustomers();
   };
 
   const handleProductSearch = (value) => {
@@ -372,12 +402,15 @@ const page = () => {
             <Select
               options={customers}
               onSearch={handleCustomerSearch}
+              onCancel={handleCustomerClearSearch}
+              onMouseLeave={handleCustomerClearSearch}
               showSearch
               allowClear
               autoFocus
               ref={customerNameFieldRef}
               onKeyDown={handleAddNewCustomerOnKeyDown}
               dropdownRender={(menu) => <>{menu}</>}
+              onClear={handleCustomerClearSearch}
             />
           </Form.Item>
           <Modal
