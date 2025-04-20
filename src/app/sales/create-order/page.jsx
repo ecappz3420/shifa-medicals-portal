@@ -36,7 +36,6 @@ const page = () => {
 
   const addLineItemBtnRef = useRef(null);
   const customerNameFieldRef = useRef(null);
-
   const onSubmit = async (data) => {
     setLoading(true);
     messageApi.open({ type: "loading", content: "Adding Record..." });
