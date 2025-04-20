@@ -174,6 +174,7 @@ const page = () => {
 
   const handleAddNewCustomerOnKeyDown = (event) => {
     if (event.key === "Enter") {
+      console.log(typedNewCustomerValue);
       if (typedNewCustomerValue) {
         if (typedNewCustomerValue !== "cleared") {
           const exists = customers.some(
@@ -228,8 +229,6 @@ const page = () => {
                       : item
                   ),
               });
-
-              console.log(result);
             } catch (error) {
               console.error("Error Adding Product:", error);
             }
@@ -245,6 +244,7 @@ const page = () => {
   };
 
   const handleCustomerSearch = async (value) => {
+    setTypedNewCustomerValue(value);
     setCustomerSearchText(value);
   };
 
