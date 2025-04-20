@@ -31,7 +31,7 @@ const page = () => {
   const [typedNewCustomerValue, setTypedNewCustomerValue] = useState("");
   const [modalResetTrigger, setModalResetTrigger] = useState(0);
   const [customerSearchText, setCustomerSearchText] = useState("");
-  const debouncedCustomerSearch = useDebounce(customerSearchText, 700);
+  const debouncedCustomerSearch = useDebounce(customerSearchText, 1000);
   const userObj = useSelector((state) => state.user.user);
 
   const addLineItemBtnRef = useRef(null);
