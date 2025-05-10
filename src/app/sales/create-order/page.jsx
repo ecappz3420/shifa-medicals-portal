@@ -408,6 +408,7 @@ const page = () => {
               autoFocus
               ref={customerNameFieldRef}
               onKeyDown={handleAddNewCustomerOnKeyDown}
+              maxLength={10}
               dropdownRender={(menu) => <>{menu}</>}
               onClear={handleCustomerClearSearch}
             />

@@ -68,6 +68,7 @@ const Customer = ({
           <InputNumber
             prefix="+91"
             maxLength={10}
+            minLength={10}
             className="w-[300px]"
             style={{ width: "100%" }}
           />
