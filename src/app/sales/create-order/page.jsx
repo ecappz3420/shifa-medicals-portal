@@ -18,7 +18,7 @@ import dayjs from "dayjs";
 import { useSelector } from "react-redux";
 import useDebounce from "@/hooks/useDebounce";
 
-const page = () => {
+const Page = () => {
   const [form] = Form.useForm();
   const [customers, setCustomers] = useState([]);
   const [formInitialValues, setFormInitialValues] = useState({});
@@ -31,7 +31,7 @@ const page = () => {
   const [typedNewCustomerValue, setTypedNewCustomerValue] = useState("");
   const [modalResetTrigger, setModalResetTrigger] = useState(0);
   const [customerSearchText, setCustomerSearchText] = useState("");
-  const debouncedCustomerSearch = useDebounce(customerSearchText, 1000);
+  const debouncedCustomerSearch = useDebounce(customerSearchText, 500);
   const userObj = useSelector((state) => state.user.user);
 
   const addLineItemBtnRef = useRef(null);
@@ -68,7 +68,6 @@ const page = () => {
       form.resetFields();
       messageApi.destroy();
       messageApi.success({ content: "Order Created!" });
-      console.log("Submitted Data: ", formData);
     } catch (error) {
       messageApi.error("Error Adding Record");
       console.log(error);
@@ -87,16 +86,23 @@ const page = () => {
     form.setFieldsValue({ Customer: data.value });
   };
 
-  const fetchAllCustomers = async (params) => {
+  const fetchAllCustomers = async () => {
     try {
       const customerResp = await fetchRecords("All_Customers", "(ID != 0)");
-      const customerData = customerResp.data.map((record) => ({
+      const newCustomerData = customerResp.data.map((record) => ({
         label: `${record.Phone_Number} - ${record.Customer_Name}`,
         value: record.Phone_Number,
         id: record.ID,
         key: record.ID,
       }));
-      setCustomers(customerData);
+
+      setCustomers((prev) => {
+        const existingValues = new Set(prev.map((c) => c.value));
+        const uniqueNewCustomers = newCustomerData.filter(
+          (customer) => !existingValues.has(customer.value)
+        );
+        return [...prev, ...uniqueNewCustomers];
+      });
     } catch (error) {
       console.error("Error fetching customers:", error);
     }
@@ -173,7 +179,6 @@ const page = () => {
 
   const handleAddNewCustomerOnKeyDown = (event) => {
     if (event.key === "Enter") {
-      console.log(typedNewCustomerValue);
       if (typedNewCustomerValue) {
         if (typedNewCustomerValue !== "cleared") {
           const exists = customers.some(
@@ -265,7 +270,13 @@ const page = () => {
           id: record.ID,
           key: record.ID,
         }));
-        setCustomers(customerData);
+        setCustomers((prev) => {
+          const existingValues = new Set(prev.map((c) => c.value));
+          const uniqueNewCustomers = customerData.filter(
+            (customer) => !existingValues.has(customer.value)
+          );
+          return [...prev, ...uniqueNewCustomers];
+        });
       } catch (error) {
         console.error("Error fetching customers:", error);
       }
@@ -549,4 +560,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Page;
