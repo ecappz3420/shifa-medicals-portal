@@ -43,6 +43,13 @@ export async function POST(req) {
     }
 
     const response = await addRecord(formName, access_token, formData);
+    console.log("Response", response);
+    if (response.code !== 3000) {
+      return NextResponse.json(
+        { message: "Error adding record", error: response.message },
+        { status: 400 }
+      );
+    }
     return NextResponse.json(
       { message: "Record Successfully Added", data: response.data },
       { status: 201 }

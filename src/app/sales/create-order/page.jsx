@@ -16,8 +16,9 @@ import { useEffect, useState } from "react";
 import Customer from "@/app/sales/create-order/Customer";
 import dayjs from "dayjs";
 import { useSelector } from "react-redux";
+import useDebounce from "@/hooks/useDebounce";
 
-const page = () => {
+const Page = () => {
   const [form] = Form.useForm();
   const [customers, setCustomers] = useState([]);
   const [formInitialValues, setFormInitialValues] = useState({});
@@ -29,11 +30,12 @@ const page = () => {
   const [salesExecutives, setSalesExecutives] = useState([]);
   const [typedNewCustomerValue, setTypedNewCustomerValue] = useState("");
   const [modalResetTrigger, setModalResetTrigger] = useState(0);
+  const [customerSearchText, setCustomerSearchText] = useState("");
+  const debouncedCustomerSearch = useDebounce(customerSearchText, 500);
   const userObj = useSelector((state) => state.user.user);
 
   const addLineItemBtnRef = useRef(null);
   const customerNameFieldRef = useRef(null);
-
   const onSubmit = async (data) => {
     setLoading(true);
     messageApi.open({ type: "loading", content: "Adding Record..." });
@@ -66,7 +68,6 @@ const page = () => {
       form.resetFields();
       messageApi.destroy();
       messageApi.success({ content: "Order Created!" });
-      console.log("Submitted Data: ", formData);
     } catch (error) {
       messageApi.error("Error Adding Record");
       console.log(error);
@@ -77,11 +78,34 @@ const page = () => {
 
   const handleModalClose = () => {
     setOpenCustomer(false);
+    setTypedNewCustomerValue("");
   };
 
   const addNewCustomer = (data) => {
     setCustomers((prev) => [...prev, data]);
     form.setFieldsValue({ Customer: data.value });
+  };
+
+  const fetchAllCustomers = async () => {
+    try {
+      const customerResp = await fetchRecords("All_Customers", "(ID != 0)");
+      const newCustomerData = customerResp.data.map((record) => ({
+        label: `${record.Phone_Number} - ${record.Customer_Name}`,
+        value: record.Phone_Number,
+        id: record.ID,
+        key: record.ID,
+      }));
+
+      setCustomers((prev) => {
+        const existingValues = new Set(prev.map((c) => c.value));
+        const uniqueNewCustomers = newCustomerData.filter(
+          (customer) => !existingValues.has(customer.value)
+        );
+        return [...prev, ...uniqueNewCustomers];
+      });
+    } catch (error) {
+      console.error("Error fetching customers:", error);
+    }
   };
 
   useEffect(() => {
@@ -92,19 +116,7 @@ const page = () => {
     });
     const startFetch = async () => {
       try {
-        const customerResp = await fetchRecords("All_Customers", "(ID != 0)");
-        const customerData = customerResp.data.map((record) => ({
-          label: `${record.Phone_Number} - ${record.Customer_Name}`,
-          value: record.Phone_Number,
-          id: record.ID,
-          key: record.ID,
-        }));
-        setCustomers(customerData);
-      } catch (error) {
-        console.error("Error fetching customers:", error);
-      }
-
-      try {
+        await fetchAllCustomers();
         const productResp = await fetchRecords("All_Products", "(ID != 0)");
         const productsData = productResp.data.map((record) => ({
           label: record.Product_Name,
@@ -219,8 +231,6 @@ const page = () => {
                       : item
                   ),
               });
-
-              console.log(result);
             } catch (error) {
               console.error("Error Adding Product:", error);
             }
@@ -229,16 +239,46 @@ const page = () => {
       }
   };
 
-  const handleCustomerSearch = (value) => {
-    const filteredResults = customers.filter((customer) =>
-      customer.value.includes(value)
-    );
+  const handleCustomerSearch = async (value) => {
+    setTypedNewCustomerValue(value);
+    setCustomerSearchText(value);
+  };
 
-    if (filteredResults.length === 0) {
-      setTypedNewCustomerValue(value.length > 10 ? value.slice(0, 10) : value);
-    } else {
-      setTypedNewCustomerValue("cleared");
-    }
+  useEffect(() => {
+    if (!debouncedCustomerSearch) return;
+
+    const fetchSearchedCustomers = async () => {
+      try {
+        const criteria = `(Phone_Number.contains("${debouncedCustomerSearch}"))`;
+        const query = new URLSearchParams({
+          reportName: "All_Customers",
+          criteria,
+        });
+        const response = await fetch("/api/zoho?" + query, { method: "GET" });
+        const result = await response.json();
+        const customerData = result.records.data.map((record) => ({
+          label: `${record.Phone_Number} - ${record.Customer_Name}`,
+          value: record.Phone_Number,
+          id: record.ID,
+          key: record.ID,
+        }));
+        setCustomers((prev) => {
+          const existingValues = new Set(prev.map((c) => c.value));
+          const uniqueNewCustomers = customerData.filter(
+            (customer) => !existingValues.has(customer.value)
+          );
+          return [...prev, ...uniqueNewCustomers];
+        });
+      } catch (error) {
+        console.error("Error fetching customers:", error);
+      }
+    };
+
+    fetchSearchedCustomers();
+  }, [debouncedCustomerSearch]);
+
+  const handleCustomerClearSearch = async () => {
+    fetchAllCustomers();
   };
 
   const handleProductSearch = (value) => {
@@ -382,12 +422,16 @@ const page = () => {
             <Select
               options={customers}
               onSearch={handleCustomerSearch}
+              onCancel={handleCustomerClearSearch}
+              onMouseLeave={handleCustomerClearSearch}
               showSearch
               allowClear
               autoFocus
               ref={customerNameFieldRef}
               onKeyDown={handleAddNewCustomerOnKeyDown}
+              maxLength={10}
               dropdownRender={(menu) => <>{menu}</>}
+              onClear={handleCustomerClearSearch}
             />
           </Form.Item>
           <Modal
@@ -521,4 +565,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Page;
