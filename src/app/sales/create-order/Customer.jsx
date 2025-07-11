@@ -69,6 +69,7 @@ const Customer = ({
             prefix="+91"
             maxLength={10}
             minLength={10}
+            formatter={(val) => val.toString().substring(0, 10)}
             className="w-[300px]"
             style={{ width: "100%" }}
           />

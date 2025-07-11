@@ -84,6 +84,11 @@ export default function SalesLayout({ children }) {
             onClick: () => router.push("/sales/sales-order-items"),
           },
           {
+            key: "3.1",
+            label: "Modify Sales Order",
+            onClick: () => router.push("/sales/modify-sales-order"),
+          },
+          {
             key: "4",
             label: "Pending Sales Order Items",
             onClick: () => router.push("/sales/pending-order-items"),
