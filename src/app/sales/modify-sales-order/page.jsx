@@ -9,7 +9,7 @@ const page = () => {
       <iframe
         width="100%"
         height="100%"
-        src={`https://creatorapp.zohopublic.in/shifaumar421/order-management/report-embed/Sales_Order_Report/4jG2yaTK14G5tGGqbCNGmMv4sNjQ65Wqp4Q03n6Ge39JFerEes7zSsxWYNd0DCE9HGkwrkn0H6KzpDrkKmU6uxYQjrWOkX2Rm7VA?zc_DelRec=false&zc_AddRec=false&Branch=${user.Branch.zc_display_value}`}
+        src={`https://creatorapp.zohopublic.in/shifaumar421/order-management/report-embed/Modify_Sales_Order/Y6pCCbXs82N66rj1ObxrAwk1BaH113wYrGUDm7kAe6yPZAX6Y7SU5QqSZTVAPGEZNvXgZkPmPrBpmOQwNKKATwyzsQBE0KjaXWjD?zc_DelRec=false&zc_AddRec=false&Branch=${user.Branch.zc_display_value}`}
       ></iframe>
     </div>
   );

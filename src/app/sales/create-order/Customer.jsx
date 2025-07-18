@@ -1,5 +1,5 @@
 import { Button, Form, Input, InputNumber } from "antd";
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 
 const Customer = ({
   modalResetTrigger,
@@ -12,7 +12,6 @@ const Customer = ({
   const customerNameFieldRef = useRef(null);
 
   useEffect(() => {
-    // Perform actions every time the modal is opened
     if (customerNameFieldRef.current) {
       setTimeout(() => customerNameFieldRef.current.focus(), 0);
     }
@@ -62,7 +61,19 @@ const Customer = ({
           label="Phone"
           name="Phone_Number"
           className="w-[300px]"
-          rules={[{ required: true, message: "Please enter a phone number" }]}
+          rules={[
+            { required: true, message: "Please enter a phone number" },
+            {
+              validator: (_, value) => {
+                if (!value || value.toString().length === 10) {
+                  return Promise.resolve();
+                }
+                return Promise.reject(
+                  new Error("Phone number must be exactly 10 digits")
+                );
+              },
+            },
+          ]}
           initialValue={Number(newCustomerPhoneNumber)}
         >
           <InputNumber
