@@ -139,12 +139,6 @@ export default function SalesLayout({ children }) {
             key: "1.1",
             label: <Link href="/sales/my-orders">Sales Order Items</Link>,
           },
-          {
-            key: "1.2",
-            label: (
-              <Link href="/sales/pending-order-items">Pending Order Items</Link>
-            ),
-          },
         ],
       },
       {
