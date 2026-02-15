@@ -13,17 +13,6 @@ const OrderPrint = forwardRef(
       salesExecutives.find((s) => s.value === orderData.Sales_Executive)
         ?.label || "N/A";
 
-    // Calculate pricing (mocking based on screenshot logic if not in data)
-    // Assuming 315 total, 300 base, 7.5 CGST, 7.5 SGST (5% total GST)
-    const totalAmt =
-      orderData.Items?.reduce(
-        (acc, item) => acc + item.Quantity * (item.Mrp || 0),
-        0,
-      ) || 0;
-    const baseAmt = totalAmt / 1.05;
-    const gstAmt = totalAmt - baseAmt;
-    const individualGst = gstAmt / 2;
-
     const formatDate = (date) => dayjs(date).format("DD/MM/YYYY HH:mm A");
 
     return (
@@ -64,7 +53,7 @@ const OrderPrint = forwardRef(
         </div>
 
         <div className="text-center font-bold text-2xl mb-6 text-slate-800 tracking-tight">
-          TAX INVOICE
+          INVOICE
         </div>
 
         {/* Info Section */}
@@ -103,12 +92,8 @@ const OrderPrint = forwardRef(
           <table className="w-full mb-4">
             <thead>
               <tr className="border-b-2 border-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-600">
-                <th className="text-left py-2 w-12">Qty</th>
+                <th className="text-left py-2 w-16">Qty</th>
                 <th className="text-left py-2">Description</th>
-                <th className="text-center py-2 w-16">Sch</th>
-                <th className="text-center py-2 w-16">Loc</th>
-                <th className="text-right py-2 w-28">Rate</th>
-                <th className="text-right py-2 w-28">Amount</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -130,20 +115,12 @@ const OrderPrint = forwardRef(
                     <td className="py-2 font-bold">
                       {item.Product || "Unknown Product"}
                     </td>
-                    <td className="text-center py-2 text-slate-300">-</td>
-                    <td className="text-center py-2 text-slate-300">-</td>
-                    <td className="text-right py-2 font-medium">
-                      {(item.Mrp || totalAmt).toFixed(2)}
-                    </td>
-                    <td className="text-right py-2 text-lg font-bold">
-                      {(item.Quantity * (item.Mrp || totalAmt)).toFixed(2)}
-                    </td>
                   </tr>
                   {item.Description && (
                     <tr className="border-none">
                       <td></td>
                       <td
-                        colSpan={5}
+                        colSpan={1}
                         className="pb-2 text-xs text-slate-400 italic -mt-1"
                       >
                         {item.Description}
@@ -154,44 +131,6 @@ const OrderPrint = forwardRef(
               ))}
             </tbody>
           </table>
-        </div>
-
-        {/* Totals Section */}
-        <div className="flex justify-between items-start gap-8 mt-4 p-4 bg-slate-50 border-t-2 border-slate-800 rounded-b">
-          <div className="flex-1 space-y-2">
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-              Summary
-            </div>
-            <div className="text-sm">
-              <span className="text-slate-400">Rep:</span>{" "}
-              <span className="font-bold uppercase ml-1">{salesRep}</span>
-            </div>
-            <div className="text-sm">
-              <span className="text-slate-400">Items:</span>{" "}
-              <span className="font-bold ml-1">
-                {orderData.Items?.length || 1}
-              </span>
-            </div>
-          </div>
-
-          <div className="w-56 space-y-1 divide-y divide-slate-100">
-            <div className="flex justify-between text-base text-slate-600 pb-1">
-              <span>Sub Total :</span>
-              <span className="font-medium">{totalAmt.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between text-base text-slate-600 py-1">
-              <span>BASE :</span>
-              <span className="font-medium">{baseAmt.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between text-sm text-slate-400 py-1">
-              <span>GST (5%) :</span>
-              <span>{gstAmt.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between font-black text-xl pt-3 text-slate-900">
-              <span>TOTAL :</span>
-              <span>Rs. {totalAmt.toFixed(2)}</span>
-            </div>
-          </div>
         </div>
 
         {/* Kind Request Section - Tighter grid */}
