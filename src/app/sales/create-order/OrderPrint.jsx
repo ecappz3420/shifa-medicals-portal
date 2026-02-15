@@ -7,8 +7,8 @@ const OrderPrint = forwardRef(
 
     const customerObj = customers.find((c) => c.value === orderData.Customer);
     const customerName =
-      customerObj?.label?.split(" - ")[1] || orderData.Customer_Name || "CASH";
-    const customerId = customerObj?.id || "N/A";
+      customerObj?.label?.split(" - ")[1] || orderData.Customer_Name || "N/A";
+    const customerId = customerObj?.Customer_ID || "N/A";
     const salesRep =
       salesExecutives.find((s) => s.value === orderData.Sales_Executive)
         ?.label || "N/A";
@@ -19,7 +19,7 @@ const OrderPrint = forwardRef(
       orderData.Items?.reduce(
         (acc, item) => acc + item.Quantity * (item.Mrp || 0),
         0,
-      ) || 315;
+      ) || 0;
     const baseAmt = totalAmt / 1.05;
     const gstAmt = totalAmt - baseAmt;
     const individualGst = gstAmt / 2;

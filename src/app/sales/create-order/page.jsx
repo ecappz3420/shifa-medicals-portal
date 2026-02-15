@@ -84,7 +84,17 @@ const Page = () => {
       console.log(result);
 
       if (data.Due_Products) {
-        setPrintableData({ ...data, Bill_No: result.data.ID });
+        try {
+          const recordResp = await fetchRecords(
+            "Sales_Order_Report",
+            `(ID == ${result.data.ID})`,
+          );
+          const orderNo = recordResp.data[0]?.Order_Number || result.data.ID;
+          setPrintableData({ ...data, Bill_No: orderNo });
+        } catch (fetchErr) {
+          console.error("Error fetching Order_Number:", fetchErr);
+          setPrintableData({ ...data, Bill_No: result.data.ID });
+        }
       }
 
       form.resetFields();
@@ -115,6 +125,7 @@ const Page = () => {
         label: `${record.Phone_Number} - ${record.Customer_Name}`,
         value: record.Phone_Number,
         id: record.ID,
+        Customer_ID: record.Customer_ID,
         key: record.ID,
       }));
 
@@ -282,6 +293,7 @@ const Page = () => {
           label: `${record.Phone_Number} - ${record.Customer_Name}`,
           value: record.Phone_Number,
           id: record.ID,
+          Customer_ID: record.Customer_ID,
           key: record.ID,
         }));
         setCustomers((prev) => {
