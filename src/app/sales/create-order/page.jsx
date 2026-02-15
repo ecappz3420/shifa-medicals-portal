@@ -17,6 +17,8 @@ import Customer from "@/app/sales/create-order/Customer";
 import dayjs from "dayjs";
 import { useSelector } from "react-redux";
 import useDebounce from "@/hooks/useDebounce";
+import OrderPrint from "./OrderPrint";
+import { useReactToPrint } from "react-to-print";
 
 const Page = () => {
   const [form] = Form.useForm();
@@ -36,6 +38,21 @@ const Page = () => {
 
   const addLineItemBtnRef = useRef(null);
   const customerNameFieldRef = useRef(null);
+  const printRef = useRef(null);
+  const [printableData, setPrintableData] = useState(null);
+
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: "Sales Order",
+  });
+
+  useEffect(() => {
+    if (printableData) {
+      handlePrint();
+      setPrintableData(null);
+    }
+  }, [printableData]);
+
   const onSubmit = async (data) => {
     setLoading(true);
     messageApi.open({ type: "loading", content: "Adding Record..." });
@@ -65,6 +82,11 @@ const Page = () => {
       });
       const result = await response.json();
       console.log(result);
+
+      if (data.Due_Products) {
+        setPrintableData({ ...data, Bill_No: result.data.ID });
+      }
+
       form.resetFields();
       messageApi.destroy();
       messageApi.success({ content: "Order Created!" });
@@ -99,7 +121,7 @@ const Page = () => {
       setCustomers((prev) => {
         const existingValues = new Set(prev.map((c) => c.value));
         const uniqueNewCustomers = newCustomerData.filter(
-          (customer) => !existingValues.has(customer.value)
+          (customer) => !existingValues.has(customer.value),
         );
         return [...prev, ...uniqueNewCustomers];
       });
@@ -149,7 +171,7 @@ const Page = () => {
       try {
         const salesExecutiveResp = await fetchRecords(
           "Sales_Executive_Report",
-          `(Branch == ${userObj.Branch.ID})`
+          `(Branch == ${userObj.Branch.ID})`,
         );
         setSalesExecutives(
           salesExecutiveResp.data.map((record) => ({
@@ -157,7 +179,7 @@ const Page = () => {
             value: record.Name,
             id: record.ID,
             key: record.ID,
-          }))
+          })),
         );
       } catch (error) {
         console.error("Error fetching sales executives:", error);
@@ -186,7 +208,7 @@ const Page = () => {
       if (typedNewCustomerValue) {
         if (typedNewCustomerValue !== "cleared") {
           const exists = customers.some(
-            (opt) => opt.value === typedNewCustomerValue
+            (opt) => opt.value === typedNewCustomerValue,
           );
           if (!exists) {
             setModalResetTrigger((prev) => prev + 1);
@@ -228,7 +250,7 @@ const Page = () => {
                   .map((item, index) =>
                     index === fieldName
                       ? { ...item, Product: productSearch }
-                      : item
+                      : item,
                   ),
               });
             } catch (error) {
@@ -265,7 +287,7 @@ const Page = () => {
         setCustomers((prev) => {
           const existingValues = new Set(prev.map((c) => c.value));
           const uniqueNewCustomers = customerData.filter(
-            (customer) => !existingValues.has(customer.value)
+            (customer) => !existingValues.has(customer.value),
           );
           return [...prev, ...uniqueNewCustomers];
         });
@@ -283,7 +305,7 @@ const Page = () => {
 
   const handleProductSearch = (value) => {
     const filteredResults = products.filter((product) =>
-      product.value.includes(value)
+      product.value.includes(value),
     );
 
     if (filteredResults.length === 0) {
@@ -366,9 +388,13 @@ const Page = () => {
       }, 200);
     } else {
       setTimeout(() => {
-      const targetForm = e.target.form;
-      const addLineItemBtnIndex = Array.prototype.indexOf.call(targetForm, addLineItemBtnRef.current);
-      targetForm[addLineItemBtnIndex - 4] && targetForm[addLineItemBtnIndex - 4].focus();
+        const targetForm = e.target.form;
+        const addLineItemBtnIndex = Array.prototype.indexOf.call(
+          targetForm,
+          addLineItemBtnRef.current,
+        );
+        targetForm[addLineItemBtnIndex - 4] &&
+          targetForm[addLineItemBtnIndex - 4].focus();
       }, 200);
     }
   };
@@ -379,7 +405,7 @@ const Page = () => {
 
     const idParts = e.target.id.split("_");
 
-    if(idParts[1] !== "0") {
+    if (idParts[1] !== "0") {
       const currentElement = idParts[2];
 
       idParts[2] = "Remove";
@@ -561,6 +587,16 @@ const Page = () => {
           </Button>
         </div>
       </Form>
+      <div style={{ position: "absolute", top: "-9999px", left: "-9999px" }}>
+        <OrderPrint
+          ref={printRef}
+          orderData={printableData}
+          customers={customers}
+          products={products}
+          salesExecutives={salesExecutives}
+          userObj={userObj}
+        />
+      </div>
     </div>
   );
 };
