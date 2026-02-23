@@ -18,13 +18,13 @@ const OrderPrint = forwardRef(
     return (
       <div
         ref={ref}
-        className="bg-white text-black p-2 w-[100mm] mx-auto overflow-hidden text-sm leading-snug flex flex-col pt-2"
+        className="bg-white text-black p-2 w-[104mm] mx-auto overflow-hidden text-sm leading-snug flex flex-col pt-2"
         style={{ fontFamily: "'Inter', 'Segoe UI', sans-serif" }}
       >
         <style>{`
         @media print {
-          @page { size: 100mm auto; margin: 0; }
-          body { margin: 0; padding: 0; }
+          @page { margin: 0; }
+          body { margin: 0; padding: 0; width: 104mm; }
           .print-logo { visibility: visible !important; }
         }
       `}</style>
@@ -153,7 +153,7 @@ const OrderPrint = forwardRef(
           </div>
         </div>
 
-        <div className="text-center text-slate-400 text-[8px] pb-4">
+        <div className="text-center text-slate-400 text-[8px] pb-8 pt-2">
           E&O.E. <br />
           <span className="font-semibold text-slate-500">
             for SHIFA MEDICAL MART
