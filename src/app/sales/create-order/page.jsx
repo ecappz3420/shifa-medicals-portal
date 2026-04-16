@@ -31,6 +31,7 @@ const Page = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [salesExecutives, setSalesExecutives] = useState([]);
   const [typedNewCustomerValue, setTypedNewCustomerValue] = useState("");
+  const [modalCustomerPhone, setModalCustomerPhone] = useState("");
   const [modalResetTrigger, setModalResetTrigger] = useState(0);
   const [customerSearchText, setCustomerSearchText] = useState("");
   const debouncedCustomerSearch = useDebounce(customerSearchText, 500);
@@ -39,6 +40,8 @@ const Page = () => {
   const addLineItemBtnRef = useRef(null);
   const customerNameFieldRef = useRef(null);
   const printRef = useRef(null);
+  const isCustomerSelecting = useRef(false);
+  const isProductSelecting = useRef(false);
   const [printableData, setPrintableData] = useState(null);
 
   const handlePrint = useReactToPrint({
@@ -89,7 +92,7 @@ const Page = () => {
             "Sales_Order_Report",
             `(ID == ${result.data.ID})`,
           );
-          const orderNo = recordResp.data[0]?.Order_Number || result.data.ID;
+          const orderNo = (recordResp?.data || [])[0]?.Order_Number || result.data.ID;
           setPrintableData({ ...data, Bill_No: orderNo });
         } catch (fetchErr) {
           console.error("Error fetching Order_Number:", fetchErr);
@@ -121,7 +124,7 @@ const Page = () => {
   const fetchAllCustomers = async () => {
     try {
       const customerResp = await fetchRecords("All_Customers", "(ID != 0)");
-      const newCustomerData = customerResp.data.map((record) => ({
+      const newCustomerData = (customerResp?.data || []).map((record) => ({
         label: `${record.Phone_Number} - ${record.Customer_Name}`,
         value: record.Phone_Number,
         id: record.ID,
@@ -151,7 +154,7 @@ const Page = () => {
       try {
         await fetchAllCustomers();
         const productResp = await fetchRecords("All_Products", "(ID != 0)");
-        const productsData = productResp.data.map((record) => ({
+        const productsData = (productResp?.data || []).map((record) => ({
           label: record.Product_Name,
           value: record.Product_Name,
           id: record.ID,
@@ -185,7 +188,7 @@ const Page = () => {
           `(Branch == ${userObj.Branch.ID})`,
         );
         setSalesExecutives(
-          salesExecutiveResp.data.map((record) => ({
+          (salesExecutiveResp?.data || []).map((record) => ({
             label: record.Name,
             value: record.Name,
             id: record.ID,
@@ -207,34 +210,43 @@ const Page = () => {
       });
       const response = await fetch("/api/zoho?" + query, { method: "GET" });
       const result = await response.json();
-      return result.records;
-    } catch {
+      return result?.records || { data: [] };
+    } catch (error) {
       console.error("Error fetching records:", error);
-      return [];
+      return { data: [] };
     }
   };
 
   const handleAddNewCustomerOnKeyDown = (event) => {
     if (event.key === "Enter") {
-      if (typedNewCustomerValue) {
-        if (typedNewCustomerValue !== "cleared") {
+      const searchValue = typedNewCustomerValue;
+      
+      setTimeout(() => {
+        if (isCustomerSelecting.current) return;
+        
+        if (searchValue && searchValue !== "cleared") {
           const exists = customers.some(
-            (opt) => opt.value === typedNewCustomerValue,
+            (opt) => String(opt.value) === String(searchValue),
           );
           if (!exists) {
+            setModalCustomerPhone(searchValue);
             setModalResetTrigger((prev) => prev + 1);
             setOpenCustomer(true);
           }
         }
-      }
+      }, 150);
     }
   };
 
-  const handleAddNewProductOnKeyDown = async (event, fieldName) => {
-    if (event.key === "Enter")
-      if (productSearch) {
-        if (productSearch !== "cleared") {
-          const exists = products.some((opt) => opt.value === productSearch);
+  const handleAddNewProductOnKeyDown = (event, fieldName) => {
+    if (event.key === "Enter") {
+      const currentProductSearch = productSearch;
+
+      setTimeout(async () => {
+        if (isProductSelecting.current) return;
+
+        if (currentProductSearch && currentProductSearch !== "cleared") {
+          const exists = products.some((opt) => String(opt.value) === String(currentProductSearch));
           if (!exists) {
             try {
               const response = await fetch("/api/zoho", {
@@ -242,25 +254,25 @@ const Page = () => {
                 body: JSON.stringify({
                   formName: "Product",
                   formData: {
-                    Product_Name: productSearch,
+                    Product_Name: currentProductSearch,
                   },
                 }),
               });
               const result = await response.json();
-              const newProduct = {
-                label: productSearch,
-                value: productSearch,
+              const newProductItem = {
+                label: currentProductSearch,
+                value: currentProductSearch,
                 id: result.data.ID,
                 key: result.data.ID,
               };
-              setProducts((prev) => [...prev, newProduct]);
+              setProducts((prev) => [...prev, newProductItem]);
 
               form.setFieldsValue({
                 Items: form
                   .getFieldValue("Items")
                   .map((item, index) =>
                     index === fieldName
-                      ? { ...item, Product: productSearch }
+                      ? { ...item, Product: currentProductSearch }
                       : item,
                   ),
               });
@@ -269,7 +281,8 @@ const Page = () => {
             }
           }
         }
-      }
+      }, 150);
+    }
   };
 
   const handleCustomerSearch = async (value) => {
@@ -289,7 +302,7 @@ const Page = () => {
         });
         const response = await fetch("/api/zoho?" + query, { method: "GET" });
         const result = await response.json();
-        const customerData = result.records.data.map((record) => ({
+        const customerData = (result?.records?.data || []).map((record) => ({
           label: `${record.Phone_Number} - ${record.Customer_Name}`,
           value: record.Phone_Number,
           id: record.ID,
@@ -467,6 +480,10 @@ const Page = () => {
               autoFocus
               ref={customerNameFieldRef}
               onKeyDown={handleAddNewCustomerOnKeyDown}
+              onSelect={() => {
+                isCustomerSelecting.current = true;
+                setTimeout(() => { isCustomerSelecting.current = false; }, 300);
+              }}
               maxLength={10}
               dropdownRender={(menu) => <>{menu}</>}
               onClear={handleCustomerClearSearch}
@@ -483,7 +500,7 @@ const Page = () => {
               modalResetTrigger={modalResetTrigger}
               handleModalClose={handleModalClose}
               addNewCustomer={addNewCustomer}
-              newCustomerPhoneNumber={typedNewCustomerValue}
+              newCustomerPhoneNumber={modalCustomerPhone}
             />
           </Modal>
 
@@ -549,6 +566,10 @@ const Page = () => {
                         handleAddNewProductOnKeyDown(event, name)
                       }
                       onSearch={(value) => handleProductSearch(value, name)}
+                      onSelect={() => {
+                        isProductSelecting.current = true;
+                        setTimeout(() => { isProductSelecting.current = false; }, 300);
+                      }}
                     />
                   </Form.Item>
                   <Form.Item
